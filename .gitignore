@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest_tmp/
+.testdata/
+.ruff_cache/
+.env
+pagbank.db
+venv/
+obsidian/
+.run/

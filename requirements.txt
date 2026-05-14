@@ -1,0 +1,13 @@
+aiosqlite
+alembic
+asyncpg
+fastapi
+pydantic-settings
+redis
+sqlalchemy
+uvicorn
+
+httpx
+pytest
+pytest-asyncio
+ruff
