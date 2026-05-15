@@ -16,7 +16,8 @@ async def main() -> None:
     if not isinstance(queue, RedisTransactionQueue):
         raise RuntimeError("standalone workers require QUEUE_BACKEND=redis")
 
-    await init_database()
+    if settings.auto_create_tables:
+        await init_database()
     workers = TransactionWorkerPool(
         queue=queue,
         locks=InMemoryAccountLockProvider(),

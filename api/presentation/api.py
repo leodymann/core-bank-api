@@ -29,7 +29,8 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        await init_database()
+        if settings.auto_create_tables:
+            await init_database()
 
         app.state.transaction_queue = queue
         app.state.account_locks = locks

@@ -1,0 +1,12 @@
+.git
+.pytest_cache
+.pytest_tmp
+.ruff_cache
+.run
+__pycache__/
+*.py[cod]
+.env
+pagbank.db
+venv/
+obsidian/
+postman(routes)/

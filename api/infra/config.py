@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     database_pool_size:int=50
     database_max_overflow:int=100
     database_pool_timeout:int=10
+    auto_create_tables:bool=False
     queue_backend:str="memory"
     redis_url:str="redis://localhost:6379/0"
     redis_transaction_queue_name:str="pagbank:transactions"

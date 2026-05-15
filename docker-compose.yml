@@ -1,0 +1,114 @@
+x-app-env: &app-env
+  APP_NAME: APIBank
+  ENVIRONMENT: docker
+  API_KEY: ${API_KEY:-dev-secret}
+  AUTH_ENABLED: "true"
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-1000}
+  RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+  DATABASE_URL: postgresql+asyncpg://pagbank:pagbank@postgres:5432/pagbank
+  DATABASE_POOL_TIMEOUT: ${DATABASE_POOL_TIMEOUT:-10}
+  QUEUE_BACKEND: redis
+  REDIS_URL: redis://redis:6379/0
+  REDIS_TRANSACTION_QUEUE_NAME: pagbank:transactions
+  QUEUE_MAX_SIZE: ${QUEUE_MAX_SIZE:-10000}
+  MARKDOWN_EXPORT_ENABLED: "false"
+  AUTO_CREATE_TABLES: "false"
+
+x-app-base: &app-base
+  build: .
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: pagbank
+      POSTGRES_USER: pagbank
+      POSTGRES_PASSWORD: pagbank
+    ports:
+      - "${POSTGRES_PORT:-5437}:5432"
+    command:
+      - postgres
+      - -c
+      - max_connections=${POSTGRES_MAX_CONNECTIONS:-200}
+      - -c
+      - shared_buffers=${POSTGRES_SHARED_BUFFERS:-256MB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pagbank -d pagbank"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    <<: *app-base
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *app-env
+      DATABASE_POOL_SIZE: "5"
+      DATABASE_MAX_OVERFLOW: "5"
+
+  api:
+    <<: *app-base
+    environment:
+      <<: *app-env
+      DATABASE_POOL_SIZE: ${API_POOL_SIZE:-20}
+      DATABASE_MAX_OVERFLOW: ${API_MAX_OVERFLOW:-30}
+      QUEUE_WORKERS: "0"
+      EMBEDDED_WORKERS_ENABLED: "false"
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    <<: *app-base
+    command: ["python", "-m", "api.worker"]
+    environment:
+      <<: *app-env
+      DATABASE_POOL_SIZE: ${WORKER_POOL_SIZE:-20}
+      DATABASE_MAX_OVERFLOW: ${WORKER_MAX_OVERFLOW:-30}
+      QUEUE_WORKERS: ${QUEUE_WORKERS:-16}
+      EMBEDDED_WORKERS_ENABLED: "false"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
