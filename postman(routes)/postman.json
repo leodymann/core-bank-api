@@ -1,0 +1,144 @@
+{
+  "info": {
+    "name": "api-bank",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "api_key",
+      "value": "dev-secret"
+    },
+    {
+      "key": "source_account_id",
+      "value": ""
+    },
+    {
+      "key": "destination_account_id",
+      "value": ""
+    },
+    {
+      "key": "transaction_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health"
+      }
+    },
+    {
+      "name": "Ready",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/ready"
+      }
+    },
+    {
+      "name": "Metrics",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/metrics"
+      }
+    },
+    {
+      "name": "Create Source Account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/accounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"owner_name\": \"Conta Origem\",\n  \"initial_balance\": \"1000.00\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Create Destination Account",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/accounts",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"owner_name\": \"Conta Destino\",\n  \"initial_balance\": \"0.00\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Account",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": "{{base_url}}/accounts/{{source_account_id}}"
+      }
+    },
+    {
+      "name": "Create Transfer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/transactions/transfers",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"source_account_id\": \"{{source_account_id}}\",\n  \"destination_account_id\": \"{{destination_account_id}}\",\n  \"amount\": \"10.50\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Transaction",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": "{{base_url}}/transactions/{{transaction_id}}"
+      }
+    }
+  ]
+}
