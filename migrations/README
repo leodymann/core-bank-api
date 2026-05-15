@@ -1,0 +1,7 @@
+Alembic migrations for APIBank.
+
+Common commands:
+
+  alembic upgrade head
+  alembic revision --autogenerate -m "describe change"
+  alembic downgrade -1
