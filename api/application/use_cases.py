@@ -6,19 +6,23 @@ from api.application.ports import AccountLockProvider, TransactionExporter, Tran
 from api.domain.entities import Account, Transaction, TransactionStatus
 from api.domain.exceptions import AccountNotFoundError, TransactionNotFoundError
 from api.domain.services import TransferService
+from collections.abc import Callable
 
 class CreateAccountUseCase:
-    def __init__(self, uow_factory: type[UnitOfWork]) -> None:
+    def __init__(self, uow_factory: Callable[[], UnitOfWork]) -> None:
         self._uow_factory = uow_factory
 
     async def execute(self, command: CreateAccountCommand) -> Account:
-        account = Account(owner_name=command.owner_name.strip(), balance=command.initial_balance)
+        account = Account(
+            owner_name=command.owner_name.strip(),
+            balance=command.initial_balance,
+        )
+
         async with self._uow_factory() as uow:
             await uow.accounts.add(account)
             await uow.commit()
+
         return account
-
-
 class GetAccountUseCase:
     def __init__(self, uow_factory: type[UnitOfWork]) -> None:
         self._uow_factory = uow_factory
